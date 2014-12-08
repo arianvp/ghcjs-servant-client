@@ -2,6 +2,8 @@
 -- See Hoogle, http://www.haskell.org/hoogle/
 
 
+-- | automatical derivation of haskell functions that let you query servant webservices
+--   
 @package servant-client
 @version 0.2
 
