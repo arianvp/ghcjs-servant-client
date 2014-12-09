@@ -52,13 +52,15 @@ instance Selector S1_0_2BaseUrl
 
 module Servant.Common.Req
 data Req
-Req :: String -> QueryText -> ByteString -> Req
+Req :: String -> QueryText -> ByteString -> [(String, Text)] -> Req
 reqPath :: Req -> String
 qs :: Req -> QueryText
 reqBody :: Req -> ByteString
+headers :: Req -> [(String, Text)]
 defReq :: Req
 appendToPath :: String -> Req -> Req
 appendToQueryString :: Text -> Maybe Text -> Req -> Req
+addHeader :: ToText a => String -> a -> Req -> Req
 setRQBody :: ByteString -> Req -> Req
 reqToRequest :: (Functor m, MonadThrow m) => Req -> BaseUrl -> m Request
 __manager :: MVar Manager
@@ -107,6 +109,7 @@ instance (KnownSymbol sym, ToText a, HasClient sublayout) => HasClient (QueryPar
 instance (KnownSymbol sym, ToText a, HasClient sublayout) => HasClient (QueryParam sym a :> sublayout)
 instance FromJSON a => HasClient (Put a)
 instance FromJSON a => HasClient (Post a)
+instance (KnownSymbol sym, ToText a, HasClient sublayout) => HasClient (Header sym a :> sublayout)
 instance FromJSON result => HasClient (Get result)
 instance HasClient Delete
 instance (KnownSymbol capture, ToText a, HasClient sublayout) => HasClient (Capture capture a :> sublayout)
