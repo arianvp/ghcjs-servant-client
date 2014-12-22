@@ -139,41 +139,11 @@ JS(xhrGetResponse, "($1).response", JSRef XMLHttpRequest -> IO (JSRef a))
 JS(xhrSetResponseType, "($1).responseType = $2", JSRef XMLHttpRequest -> JSString -> IO ())
 JS(xhrGetStatus, "($1).status", JSRef XMLHttpRequest -> IO Int)
 
-{-mkRequest :: String -> (JSRef XMLHttpRequest -> IO ()) -> String -> (JSString -> IO a) -> IO (JSRef XMLHttpRequest)
-mkRequest = mkRequestGeneric Nothing (xhrGetResponseText)
-
-mkGet :: String -> (JSString -> IO a) -> IO (JSRef XMLHttpRequest)
-mkGet = mkRequest "GET" xhrSend
-
-mkPost :: String -> JSString -> (JSString -> IO a) -> IO (JSRef XMLHttpRequest)
-mkPost url d = mkRequest "POST" (flip xhrSendWithData d) url
--}
 
 
 
-mkRequestGeneric :: Maybe String -> (JSRef XMLHttpRequest -> IO r) -> String -> (JSRef XMLHttpRequest -> IO ()) -> String -> (r -> IO a) -> IO (JSRef XMLHttpRequest)
-mkRequestGeneric responseType convertResponse method send url cb = do
-  xhr <- newXhr
-  xhrOpen xhr (fromString method) (fromString url) jsTrue
-  maybe (return ()) (xhrSetResponseType xhr . toJSString) responseType
-  rec callback <- syncCallback AlwaysRetain True $ do
-        readyState <- fromJSRef =<< xhrGetReadyState xhr
-        if readyState == Just 4
-           then do
-             _ <- cb =<< convertResponse xhr
-             release callback --TODO: We're assuming that the request will only be called with readyState == 4 once; is this valid?
-           else return ()
-  xhrSetOnReadyStateChange xhr callback
-  _ <- send xhr
-  return xhr
--- var xhr = new XMLHttpRequest();
--- xhr.open('GET', '/path', true);
--- xhr.responseType = 'arraybuffer';
--- xhr.onload = 
---
 -- TODO: Error handling
--- TODO: Left on non 2xx
-mkBinaryRequest' :: String -> String -> Maybe ByteString -> IO (Either String  (Int,ByteString))
+mkBinaryRequest' :: String -> String -> Maybe ByteString -> IO (Either Int  (Int,ByteString))
 mkBinaryRequest' method url body = do
   res <- newEmptyMVar
   xhr <- newXhr
@@ -189,7 +159,7 @@ mkBinaryRequest' method url body = do
                 bs <- (bufferByteString 0 0 <=< xhrGetResponse) xhr
                 putMVar res (return (status,bs))
               else
-                putMVar res (Left $ "Something went wrong with:" ++ show status) 
+                putMVar res (Left status) 
             release cb
           else
             return ()
@@ -241,7 +211,16 @@ performRequest reqMethod req isWantedStatus (BaseUrl reqScheme reqHost reqPort) 
                                       }
                            , uriPath = reqPath req
                            }
-  undefined
+--TODO: Codesmell the unpacking. 
+  res <- liftIO $ mkBinaryRequest' (Data.ByteString.Char8.unpack reqMethod) url (Just (reqBody req))
+  -- TODO: set headers
+  
+  case res of
+    Left status -> left (displayHttpRequest reqMethod ++ " failed with status: " ++ show status)
+    Right (status,res) ->
+      if isWantedStatus status
+        then return $ (status, res)
+        else left (displayHttpRequest reqMethod ++ " failed with status: " ++ show status)
   
   --bs <- liftIO $ mkBinaryRequest' "GET" url Nothing
 #endif
