@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP #-}
 -- | This module provides 'client' which can automatically generate
 -- querying functions for each endpoint just from the type representing your
 -- API.
@@ -15,7 +16,17 @@ module Servant.Client
 
 import Control.Monad.Trans.Either
 import Data.Aeson
+#if !defined(ghcjs_HOST_OS)
 import Data.ByteString.Lazy (ByteString)
+#else
+import Data.ByteString.Char8 (ByteString)
+import qualified Data.ByteString               as B
+import qualified Data.ByteString.Internal      as BI
+import qualified Data.ByteString.Lazy          as BL
+import qualified Data.ByteString.Lazy.Internal as BLI
+import           Foreign.ForeignPtr
+import           Foreign.Ptr
+#endif
 import Data.List
 import Data.Proxy
 import Data.String.Conversions
@@ -327,7 +338,11 @@ instance (ToJSON a, HasClient sublayout)
 
   clientWithRoute Proxy req body =
     clientWithRoute (Proxy :: Proxy sublayout) $
+#if !defined(ghcjs_HOST_OS)
       setRQBody (encode body) req
+#else
+      setRQBody ((B.concat . BL.toChunks) (encode body)) req
+#endif
 
 -- | Make the querying function append @path@ to the request path.
 instance (KnownSymbol path, HasClient sublayout) => HasClient (path :> sublayout) where

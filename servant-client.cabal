@@ -30,7 +30,9 @@ Bug-reports:         http://github.com/haskell-servant/servant-client/issues
 source-repository head
   type: git
   location: http://github.com/haskell-servant/servant-client.git
-
+executable test
+  build-depends: servant-client, base >= 4.7 && <5
+  main-is: Main.hs
 library
   exposed-modules:
     Servant.Client
@@ -43,7 +45,6 @@ library
     , bytestring
     , either
     , exceptions
-    , http-client
     , http-types
     , network-uri >= 2.6
     , safe
@@ -51,6 +52,12 @@ library
     , string-conversions
     , text
     , transformers
+  if !impl(ghcjs)
+    build-depends:
+        http-client
+  if impl(ghcjs)
+    build-depends:
+        ghcjs-base
   hs-source-dirs: src
   default-language: Haskell2010
   ghc-options: -Wall
