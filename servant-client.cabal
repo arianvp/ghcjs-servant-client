@@ -31,7 +31,7 @@ source-repository head
   type: git
   location: http://github.com/haskell-servant/servant-client.git
 executable test
-  build-depends: servant-client,servant, either, aeson, base >= 4.7 && <5, transformers
+  build-depends: servant-client,servant, either, aeson, base >= 4.7 && <5, transformers,ghcjs-base
   main-is: Main.hs
 library
   exposed-modules:

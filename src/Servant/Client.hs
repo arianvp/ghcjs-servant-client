@@ -9,7 +9,7 @@
 -- querying functions for each endpoint just from the type representing your
 -- API.
 module Servant.Client
-  ( client
+  ( client, doIt
   , HasClient(..)
   , module Servant.Common.BaseUrl
   ) where

@@ -138,7 +138,7 @@ JS(xhrGetResponseText, "($1).responseText", JSRef XMLHttpRequest -> IO (JSString
 JS(xhrGetResponse, "($1).response", JSRef XMLHttpRequest -> IO (JSRef a))
 JS(xhrSetResponseType, "($1).responseType = $2", JSRef XMLHttpRequest -> JSString -> IO ())
 JS(xhrGetStatus, "($1).status", JSRef XMLHttpRequest -> IO Int)
-
+JS(doIt, "document.querySelector('body').appendChild(document.createTextNode($1))", JSString -> IO ())
 
 
 
